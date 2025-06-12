@@ -1,0 +1,16 @@
+{% extends 'memes/base.html' %}
+{% block content %}
+{% load static %}
+
+<h2>Галерея мемов</h2>
+<ul>
+    {% for meme in memes %}
+        <li>
+            <h3>{{ meme.title }}</h3>
+            <img src="{% static meme.image %}">
+            <p>{{ meme.description }}</p>
+        </li>
+    {% endfor %}
+</ul>
+
+{% endblock content %}

@@ -1,0 +1,19 @@
+{% extends 'memes/base.html' %}
+{% block content %}
+{% load static %}
+
+{% if req_id <= memes_ids %}
+{% for meme in memes %}
+{% if forloop.counter == req_id %}
+<h2>{{ memes.title }}</h2>
+<img src="{% static meme.image %}">
+<p>{{ memes.description }}</p>
+{% endif %}
+{% endfor %}
+{% else %}
+
+<h2>Мем не найден :З</h2>
+
+{% endif %}
+
+{% endblock content %}
