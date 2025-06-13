@@ -1,0 +1,24 @@
+{% extends 'memes/base.html' %}
+{% block content %}
+{% load static %}
+
+<div class="container">
+    <h1 class="title">Добавить новый мем</h1>
+
+    <form action="" method="post" enctype="multipart/form-data" class="meme-form">
+      <!-- csrf_token вставишь сам позже -->
+
+      <label for="title">Название:</label>
+      <input type="text" id="title" name="title" required />
+
+      <label for="description">Описание:</label>
+      <textarea id="description" name="description" rows="4" required></textarea>
+
+      <label for="image">Изображение:</label>
+      <input type="file" id="image" name="image" accept="image/*" required />
+
+      <button type="submit">Загрузить мем</button>
+    </form>
+</div>
+
+{% endblock content %}

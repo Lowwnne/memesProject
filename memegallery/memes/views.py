@@ -1,12 +1,11 @@
 from django.http import HttpRequest
 from django.shortcuts import render
+from .models import Memes
 
-memes_list = [
-  {'id': 1, 'title': 'Python – это боль', 'image': 'memes/python_pain.jpg', 'description': 'Но красивый синтаксис всё прощает.'},
-  {'id': 2, 'title': 'Django в 2 ночи', 'image': 'memes/django_night.jpg', 'description': 'Когда дебаггер твой единственный друг.'},
-]
+memes_list = Memes.objects.all()
 
 def memes(request: HttpRequest):
+  print([memes_list[i].image.url for i in range(len(memes_list))])
   return render(request, 'memes/memes_list.html', context={'memes': memes_list})
 
 def meme_for_id(request: HttpRequest, meme_id: int):
@@ -21,3 +20,6 @@ def contacts(request: HttpRequest):
 
 def main(request: HttpRequest):
   return render(request, 'memes/index.html')
+
+def send_meme(request: HttpRequest):
+  return render(request, 'memes/add_meme.html')

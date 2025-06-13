@@ -7,7 +7,7 @@
     {% for meme in memes %}
         <li>
             <h3>{{ meme.title }}</h3>
-            <img src="{% static meme.image %}">
+            <img src={{ meme.image.url }}>
             <p>{{ meme.description }}</p>
         </li>
     {% endfor %}
