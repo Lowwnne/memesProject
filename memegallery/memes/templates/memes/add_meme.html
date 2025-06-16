@@ -5,9 +5,9 @@
 <div class="container">
     <h1 class="title">Добавить новый мем</h1>
 
-    <form action="" method="post" enctype="multipart/form-data" class="meme-form">
+    <form action="{% url 'memes:add_meme' %}" method="post" enctype="multipart/form-data" class="meme-form">
       <!-- csrf_token вставишь сам позже -->
-
+    {% csrf_token %}
       <label for="title">Название:</label>
       <input type="text" id="title" name="title" required />
 
