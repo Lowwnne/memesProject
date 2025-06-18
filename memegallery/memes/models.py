@@ -5,10 +5,12 @@ from django.forms import ModelForm
 from django.urls import reverse
 from django.utils import timezone
 
+def date_path(instance, filename):
+    return f'{timezone.now().date()}/{filename}'
 
 class Memes(models.Model):
     title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to='images/')
+    image = models.ImageField(upload_to=date_path)
     description = models.TextField(blank=True)
     date = models.DateTimeField(auto_now_add=True)
     slug = models.SlugField(unique=True)

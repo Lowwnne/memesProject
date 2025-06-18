@@ -38,7 +38,7 @@ def add_meme(request: HttpRequest):
   print(request.FILES)
   if form.is_valid():
     new_meme = form.save(commit=False)
-    new_meme.slug = translit(request.POST['title'].replace(' ', '-'), 'ru', reversed=True)
+    new_meme.slug = translit(request.POST['title'].strip().replace(' ', '-'), 'ru', reversed=True)
     new_meme.save()
   print(form.errors)
   return HttpResponseRedirect(reverse('memes:main'))
