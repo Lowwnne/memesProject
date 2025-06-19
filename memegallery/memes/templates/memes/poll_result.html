@@ -1,0 +1,17 @@
+{% extends 'memes/base.html' %}
+{% block content %}
+{% load static %}
+
+<h1>Результаты опроса</h1>
+<ul>
+{% for choice in question.choice_set.all %}
+<li>
+  <h3>{{ choice.meme.title }}</h3>
+  <img src="{{ choice.meme.image.url }}">
+  <p>{{ choice.meme.description }}</p>
+  <p>{{ choice.votes }}</p>
+</li>
+{% endfor %}
+</ul>
+
+{% endblock content %}
