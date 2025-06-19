@@ -1,0 +1,17 @@
+{% extends 'memes/base.html' %}
+{% block content %}
+{% load static %}
+
+{% if recent_polls %}
+<h1>Актуальные опросы</h1>
+<ol>
+{% for question in recent_polls %}
+  <li><h3><a href="{% url 'memes:poll_view' question.slug %}">{{ question.title }}</a></h3></li>
+{% endfor %}
+</ol>
+
+{% else %}
+<h1>Актуальных опросов пока нет :(</h1>
+{% endif %}
+
+{% endblock content %}

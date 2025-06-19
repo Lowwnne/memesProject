@@ -30,12 +30,18 @@ class Question(models.Model):
     description = models.CharField(max_length=202)
     slug = models.SlugField(unique=True)
     pub_date = models.DateTimeField(auto_now_add=True)
-    winner = models.ForeignKey(Memes, on_delete=models.DO_NOTHING, null=True)
+    winner = models.ForeignKey(Memes, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return self.title
 
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    meme = models.ForeignKey(Memes, on_delete=models.DO_NOTHING)
+    meme = models.ForeignKey(Memes, on_delete=models.CASCADE)
     votes = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.question.title
 
 class MemeForm(ModelForm):
   class Meta:

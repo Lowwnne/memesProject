@@ -1,5 +1,7 @@
 from django.contrib import admin
-from .models import Memes
+from .models import *
 
 admin.site.register(Memes)
+admin.site.register(Question)
+admin.site.register(Choice)
 # Register your models here.

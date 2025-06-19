@@ -1,0 +1,24 @@
+{% extends 'memes/base.html' %}
+{% block content %}
+{% load static %}
+
+<h1>{{ question.title }}</h1>
+<p>{{ question.description }}</p>
+
+<form method="post" action="{% url 'memes:poll_view_processing' question.slug %}">
+  {% csrf_token %}
+  <div class="memes-container">
+    {% for choice in question.choice_set.all %}
+      <label class="meme-block">
+        <input type="radio" name="voted_meme" value="{{ choice.meme.id }}" required>
+        <div class="meme-content">
+          <img src="{{ choice.meme.image.url }}" alt="{{ choice.meme.title }}">
+          <h3>{{ choice.meme.title }}</h3>
+          <p>{{ choice.meme.description }}</p>
+        </div>
+      </label>
+    {% endfor %}
+  </div>
+  <button type="submit" class="submit-button">Проголосовать</button>
+</form>
+{% endblock content %}
