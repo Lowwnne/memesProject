@@ -78,11 +78,12 @@ def poll_view(request: HttpRequest, poll_id):
 def poll_view_processing(request: HttpRequest, poll_id):
     print(request.POST.getlist('voted_meme'))
     if request.method == 'POST':
-        q = Question.objects.get(slug=poll_id)
+        q = get_object_or_404(Question, slug=poll_id)
         c = q.choice_set.get(meme=int(request.POST.getlist('voted_meme')[0]))
         c.votes += 1
         c.save()
-    return HttpResponseRedirect(reverse('memes:main'))
+    return HttpResponseRedirect(reverse('memes:poll_view_results', kwargs={'poll_id': q.slug}))
 
 def poll_view_results(request: HttpRequest, poll_id):
-    return HttpResponseRedirect(reverse('memes:main'))
+    question = get_object_or_404(Question, slug=poll_id)
+    return render(request, 'memes/poll_result.html', context={'question': question})

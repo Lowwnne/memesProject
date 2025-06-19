@@ -19,10 +19,10 @@ urlpatterns = [
 
     # Создание опроса
     path('polls/create_poll/', views.create_poll_view, name='create_poll'),
-    path('polls/create_poll/processing', views.create_poll_processing, name='create_poll_processing'),
+    path('polls/create_poll/processing/', views.create_poll_processing, name='create_poll_processing'),
 
     # Просмотр опросов и голосование
     path('polls/<slug:poll_id>/', views.poll_view, name='poll_view'),
-    path('polls/<slug:poll_id>/processing', views.poll_view_processing, name='poll_view_processing'),
-    path('polls/<slug:poll_id>/results', views.poll_view_results, name='poll_view_results')
+    path('polls/<slug:poll_id>/processing/', views.poll_view_processing, name='poll_view_processing'),
+    path('polls/<slug:poll_id>/results/', views.poll_view_results, name='poll_view_results')
 ]
