@@ -25,8 +25,24 @@ class Memes(models.Model):
     def __str__(self):
         return self.title
 
+class Question(models.Model):
+    title = models.CharField(max_length=202)
+    description = models.CharField(max_length=202)
+    slug = models.SlugField(unique=True)
+    pub_date = models.DateTimeField(auto_now_add=True)
+    winner = models.ForeignKey(Memes, on_delete=models.DO_NOTHING, null=True)
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    meme = models.ForeignKey(Memes, on_delete=models.DO_NOTHING)
+    votes = models.IntegerField(default=0)
 
 class MemeForm(ModelForm):
   class Meta:
     model = Memes
     fields = ('title', 'image', 'description')
+
+class PollQuestionForm(ModelForm):
+    class Meta:
+        model = Question
+        fields = ('title', 'description')

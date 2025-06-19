@@ -9,5 +9,7 @@ urlpatterns = [
     path('contacts/', views.contacts, name='contacts'),
     path('send_meme/', views.send_meme, name='send_meme'),
     path('send_meme/processing', views.add_meme, name='add_meme'),
+    path('polls/create_poll/', views.create_poll_view, name='create_poll'),
+    path('polls/create_poll/processing', views.create_poll_processing, name='create_poll_processing'),
     path('', views.main, name='main')
 ]

@@ -8,9 +8,7 @@ from django.utils import timezone
 
 from transliterate import translit, get_available_language_codes
 
-from .models import Memes, MemeForm
-
-
+from .models import Memes, MemeForm, PollQuestionForm, Choice, Question
 
 def memes(request: HttpRequest):
   memes_list = Memes.objects.all()
@@ -41,4 +39,19 @@ def add_meme(request: HttpRequest):
     new_meme.slug = translit(request.POST['title'].strip().replace(' ', '-'), 'ru', reversed=True)
     new_meme.save()
   print(form.errors)
+  return HttpResponseRedirect(reverse('memes:main'))
+
+def create_poll_view(request: HttpRequest):
+  return render(request, 'memes/create_poll.html', context={'memes': Memes.objects.all()})
+
+def create_poll_processing(request: HttpRequest):
+  q_form = PollQuestionForm(request.POST)
+  if q_form.is_valid():
+    new_q = q_form.save(commit=False)
+    new_q.slug = translit(request.POST['title'].strip().replace(' ', '-'), 'ru', reversed=True)
+    new_q.save()
+    q = Question.objects.order_by('-pk').first()
+    for el in request.POST.getlist('memes'):
+      q.choice_set.create(meme=Memes.objects.get(pk=int(el)))
+
   return HttpResponseRedirect(reverse('memes:main'))
