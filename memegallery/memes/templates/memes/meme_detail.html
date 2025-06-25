@@ -4,5 +4,20 @@
 <h2>{{ meme.title }}</h2>
 <img src="{{ meme.image.url }}">
 <p>{{ meme.description }}</p>
+<p>Рейтинг мема: {{ meme.rating }}</p>
+
+<form action="" method="post">
+    {% csrf_token %}
+    <button type="submit" name="rating" value="1">Поднять рейтинг</button>
+    <button type="submit" name="rating" value="-1">Опустить рейтинг</button>
+</form>
+
+<form action="" method="post">
+    {% csrf_token %}
+    <p>{{ meme.id }}</p>
+    {{ comment_form }}
+    <input type="hidden" name="meme" value="{{ meme.id }}"  >
+    <button type="submit">Отправить</button>
+</form>
 
 {% endblock content %}

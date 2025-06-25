@@ -2,26 +2,13 @@
 {% block content %}
 {% load static %}
 
-<form action="{% url 'memes:create_poll_processing' %}" method="post" enctype="multipart/form-data" class="poll-form">
+<form action=""
+      method="post" enctype="multipart/form-data"
+      class="poll-form">
+
   {% csrf_token %}
+  {{ form.as_p }}
 
-  <label for="title">Название опроса:</label>
-  <input type="text" id="title" name="title" required>
-
-  <label for="description">Описание опроса:</label>
-  <textarea id="description" name="description" rows="4" required></textarea>
-
-  <div class="memes-grid">
-    {% for meme in memes %}
-      <label class="meme-option">
-        <input type="checkbox" name="memes" value="{{ meme.id }}">
-        <img src="{{ meme.image.url }}" alt="{{ meme.title }}">
-        <p>{{ meme.title }}</p>
-      </label>
-    {% endfor %}
-  </div>
-
-  <button type="submit">Создать опрос</button>
+  <button type="submit">Submit</button>
 </form>
-
 {% endblock content %}

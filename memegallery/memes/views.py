@@ -5,12 +5,14 @@ from django.db.models import F
 from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
+from django.template.base import kwarg_re
 from django.urls import reverse
 from django.utils import timezone
 
-from transliterate import translit, get_available_language_codes
+from .forms import AddMemeForm, AddPollForm, VoteForm, RatingForm, CommentForm
+from .to_slug import to_slug
 
-from .models import Memes, MemeForm, PollQuestionForm, Question
+from .models import Memes, Question
 
 ### Базовые страницы ###
 def main(request: HttpRequest):
@@ -21,10 +23,6 @@ def memes(request: HttpRequest):
     memes_list = Memes.objects.all()
     return render(request, 'memes/memes_list.html', context={'memes': memes_list})
 
-def meme_for_id(request: HttpRequest, meme_slug):
-    meme = get_object_or_404(Memes, slug=meme_slug)
-    return render(request, 'memes/meme_detail.html', context={'meme': meme})
-
 def about(request: HttpRequest):
     return render(request, 'memes/about.html')
 
@@ -32,19 +30,43 @@ def contacts(request: HttpRequest):
     return render(request, 'memes/contact.html')
 
 
+### Страница с мемом ###
+def meme_for_id(request: HttpRequest, meme_slug):
+    meme = get_object_or_404(Memes, slug=meme_slug)
+    if request.method != 'POST':
+        comment_form = CommentForm()
+        return render(request,
+                      'memes/meme_detail.html',
+                      context={'meme': meme, 'comment_form': comment_form})
+
+    rating_form = RatingForm(request.POST)
+    if rating_form.is_valid():
+        meme.rating += int(rating_form.cleaned_data['rating'])
+        meme.save()
+
+    comment_form = CommentForm(request.POST)
+    if comment_form.is_valid():
+        comment_form.save()
+
+    return HttpResponseRedirect(reverse('memes:meme_for_id', args=[meme_slug]))
+
+
+def meme_comment(request: HttpRequest, meme_slug):
+    return HttpResponseRedirect(reverse('memes:meme_for_id', args=[meme_slug]))
+
 ### Отправка мемов ###
 def send_meme(request: HttpRequest):
-    return render(request, 'memes/add_meme.html')
+    if request.method == 'POST':
+        form = AddMemeForm(request.POST, request.FILES)
+        if form.is_valid():
+            meme = form.save(commit=False)
+            meme.slug = to_slug(form.cleaned_data['title'])
+            meme.save()
+            return HttpResponseRedirect(reverse('memes:main'))
+    else:
+        form = AddMemeForm()
 
-def add_meme(request: HttpRequest):
-    form = MemeForm(request.POST, request.FILES)
-    print(request.FILES)
-    if form.is_valid():
-        new_meme = form.save(commit=False)
-        new_meme.slug = translit(request.POST['title'].strip().replace(' ', '-'), 'ru', reversed=True)
-        new_meme.save()
-    print(form.errors)
-    return HttpResponseRedirect(reverse('memes:main'))
+    return render(request, 'memes/add_meme.html', context={'form': form})
 
 
 ### Страница со всеми опросами ##
@@ -55,28 +77,40 @@ def polls(request: HttpRequest):
 
 ### Создание опроса ##
 def create_poll_view(request: HttpRequest):
-    return render(request, 'memes/create_poll.html', context={'memes': Memes.objects.all()})
+    if request.method == 'POST':
+        form = AddPollForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            question = Question.objects.create(title=data['title'],
+                                               description=data['description'],
+                                               slug = to_slug(data['title']),
+                                               end_date = data['end_date']
+                                               )
 
-def create_poll_processing(request: HttpRequest):
-    q_form = PollQuestionForm(request.POST)
-    if q_form.is_valid():
-        new_q = q_form.save(commit=False)
-        new_q.slug = translit(request.POST['title'].strip().replace(' ', '-'), 'ru', reversed=True)
-        new_q.save()
-        q = Question.objects.order_by('-pk').first()
-        for el in request.POST.getlist('memes'):
-            q.choice_set.create(meme=Memes.objects.get(pk=int(el)))
+            for meme in data['memes']:
+                question.choice_set.create(question=question,
+                                        meme=meme)
+        HttpResponseRedirect(reverse('memes:main'))
+    else:
+        form = AddPollForm()
 
-    return HttpResponseRedirect(reverse('memes:main'))
+    return render(request, 'memes/create_poll.html', context={'form': form})
 
 
 ### Просмотр опросов и голосование ###
 def poll_view(request: HttpRequest, poll_id):
-    question = get_object_or_404(Question, slug=poll_id)
-    return render(request, 'memes/view_poll.html', context={'question': question})
+    if request.method == 'POST':
+        form = VoteForm(request.POST)
+        if form.is_valid():
+            form.cleaned_data['choice'].votes += 1
+            form.cleaned_data['choice'].save()
+        return HttpResponseRedirect(reverse('memes:main'))
+    else:
+        return render(request, 'memes/view_poll.html',
+                      context={'question': get_object_or_404(Question, slug=poll_id)}
+                      )
 
 def poll_view_processing(request: HttpRequest, poll_id):
-    print(request.POST.getlist('voted_meme'))
     if request.method == 'POST':
         q = get_object_or_404(Question, slug=poll_id)
         c = q.choice_set.get(meme=int(request.POST.getlist('voted_meme')[0]))
