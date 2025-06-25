@@ -16,8 +16,19 @@
     {% csrf_token %}
     <p>{{ meme.id }}</p>
     {{ comment_form }}
-    <input type="hidden" name="meme" value="{{ meme.id }}"  >
+    <input type="hidden" name="meme" value="{{ meme.id }}">
     <button type="submit">Отправить</button>
 </form>
+
+<h2>Комментарии</h2>
+<ul>
+    {% for comment in comments %}
+    <li>
+        <h3>{{ comment.name }}</h3>
+        <p>{{ comment.comment }}</p>
+        <p>{{ comment.end_date }}</p>
+    </li>
+    {% endfor %}
+</ul>
 
 {% endblock content %}

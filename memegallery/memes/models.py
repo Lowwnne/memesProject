@@ -48,6 +48,7 @@ class Choice(models.Model):
 class AnonymousComment(models.Model):
     name = models.CharField(max_length=202, default='Anonymous')
     comment = models.CharField(max_length=300)
+    pub_date = models.DateTimeField(auto_now_add=True, null=True)
     meme = models.ForeignKey(Memes, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):

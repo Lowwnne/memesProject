@@ -37,7 +37,7 @@ def meme_for_id(request: HttpRequest, meme_slug):
         comment_form = CommentForm()
         return render(request,
                       'memes/meme_detail.html',
-                      context={'meme': meme, 'comment_form': comment_form})
+                      context={'meme': meme, 'comment_form': comment_form, 'comments': meme.anonymouscomment_set.all()})
 
     rating_form = RatingForm(request.POST)
     if rating_form.is_valid():
