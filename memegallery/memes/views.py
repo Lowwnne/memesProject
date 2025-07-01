@@ -6,118 +6,139 @@ from django.forms import ModelForm
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.template.base import kwarg_re
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.views import View
+from django.views.generic import TemplateView, ListView, FormView
 
 from .forms import AddMemeForm, AddPollForm, VoteForm, RatingForm, CommentForm
-from .to_slug import to_slug
 
 from .models import Memes, Question
 
+import re
+
+symbols = r'!%^&*()+={}|~[]\;"' + "':<>?,./#"
+
+def translate(line: str):
+    return re.sub(r"[^\w]", '-', line)
+
+
 ### Базовые страницы ###
-def main(request: HttpRequest):
-    memes_list = Memes.objects.filter(date__lte=timezone.now()).order_by('-date')
-    return render(request, 'memes/index.html', context={'recent_memes': memes_list})
+class HomeView(ListView):
+    template_name = 'memes/memes_list.html'
+    context_object_name = 'memes'
 
-def memes(request: HttpRequest):
-    memes_list = Memes.objects.all()
-    return render(request, 'memes/memes_list.html', context={'memes': memes_list})
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Актуальные мемы'
+        return context
 
-def about(request: HttpRequest):
-    return render(request, 'memes/about.html')
+    def get_queryset(self):
+        return Memes.objects.filter(date__lte=timezone.now()).order_by('-date')[:5]
 
-def contacts(request: HttpRequest):
-    return render(request, 'memes/contact.html')
+class MemesListView(HomeView):
+    def get_context_data(self, *, object_list=None, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Все мемы'
+        return context
 
+    def get_queryset(self):
+        return Memes.objects.filter(date__lte=timezone.now()).order_by('-date')
+
+class AboutView(TemplateView):
+    template_name = 'memes/about.html'
+
+class ContactsView(TemplateView):
+    template_name = 'memes/contact.html'
 
 ### Страница с мемом ###
-def meme_for_id(request: HttpRequest, meme_slug):
-    meme = get_object_or_404(Memes, slug=meme_slug)
-    if request.method != 'POST':
+class MemeDetailView(View):
+    def get(self, request, meme_slug, *args, **kwargs):
+        meme = get_object_or_404(Memes, slug=meme_slug)
         comment_form = CommentForm()
         return render(request,
                       'memes/meme_detail.html',
                       context={'meme': meme, 'comment_form': comment_form, 'comments': meme.anonymouscomment_set.all()})
 
-    rating_form = RatingForm(request.POST)
-    if rating_form.is_valid():
-        meme.rating += int(rating_form.cleaned_data['rating'])
-        meme.save()
+    def post(self, request, meme_slug):
+        meme = get_object_or_404(Memes, slug=meme_slug)
+        rating_form = RatingForm(request.POST)
+        if rating_form.is_valid():
+            meme.rating += int(rating_form.cleaned_data['rating'])
+            meme.save()
 
-    comment_form = CommentForm(request.POST)
-    if comment_form.is_valid():
-        comment_form.save()
+        comment_form = CommentForm(request.POST)
+        if comment_form.is_valid():
+            comment_form.save()
 
-    return HttpResponseRedirect(reverse('memes:meme_for_id', args=[meme_slug]))
-
-
-def meme_comment(request: HttpRequest, meme_slug):
-    return HttpResponseRedirect(reverse('memes:meme_for_id', args=[meme_slug]))
+        return HttpResponseRedirect(reverse('memes:meme_for_id', args=[meme_slug]))
 
 ### Отправка мемов ###
-def send_meme(request: HttpRequest):
-    if request.method == 'POST':
-        form = AddMemeForm(request.POST, request.FILES)
-        if form.is_valid():
-            meme = form.save(commit=False)
-            meme.slug = to_slug(form.cleaned_data['title'])
-            meme.save()
-            return HttpResponseRedirect(reverse('memes:main'))
-    else:
-        form = AddMemeForm()
+class SendMemeView(FormView):
+    template_name = 'memes/add_meme.html'
+    form_class = AddMemeForm
+    success_url = reverse_lazy('memes:memes')
 
-    return render(request, 'memes/add_meme.html', context={'form': form})
+    def form_valid(self, form):
+        meme = form.save(commit=False)
+        title = form.cleaned_data['title'].replace(' ', '-')
+        meme.slug = translate(title)
+        meme.save()
+        return super().form_valid(form)
 
 
 ### Страница со всеми опросами ##
-def polls(request: HttpRequest):
-    recent_polls = Question.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')
-    return render(request, 'memes/polls.html', context={'recent_polls': recent_polls})
+class PollView(ListView):
+    template_name = 'memes/polls.html'
+    context_object_name = 'recent_polls'
+
+    def get_queryset(self):
+        return Question.objects.filter(pub_date__lte=timezone.now()).order_by('-pub_date')
 
 
 ### Создание опроса ##
-def create_poll_view(request: HttpRequest):
-    if request.method == 'POST':
-        form = AddPollForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            question = Question.objects.create(title=data['title'],
-                                               description=data['description'],
-                                               slug = to_slug(data['title']),
-                                               end_date = data['end_date']
-                                               )
+class CreatePollView(FormView):
+    template_name = 'memes/create_poll.html'
+    form_class = AddPollForm
+    success_url = reverse_lazy('memes:main')
 
-            for meme in data['memes']:
-                question.choice_set.create(question=question,
-                                        meme=meme)
-        HttpResponseRedirect(reverse('memes:main'))
-    else:
-        form = AddPollForm()
+    def form_valid(self, form):
+        data = form.cleaned_data
+        question = Question.objects.create(title=data['title'],
+                                           description=data['description'],
+                                           slug=translate(data['title']),
+                                           end_date=data['end_date']
+                                           )
 
-    return render(request, 'memes/create_poll.html', context={'form': form})
+        for meme in data['memes']:
+            question.choice_set.create(question=question, meme=meme)
+
+        return super().form_valid(form)
 
 
 ### Просмотр опросов и голосование ###
-def poll_view(request: HttpRequest, poll_id):
-    if request.method == 'POST':
-        form = VoteForm(request.POST)
-        if form.is_valid():
-            form.cleaned_data['choice'].votes += 1
-            form.cleaned_data['choice'].save()
-        return HttpResponseRedirect(reverse('memes:main'))
-    else:
+class PollDetailView(View):
+    def get(self, request, poll_id, *args, **kwargs):
         return render(request, 'memes/view_poll.html',
                       context={'question': get_object_or_404(Question, slug=poll_id)}
                       )
 
-def poll_view_processing(request: HttpRequest, poll_id):
-    if request.method == 'POST':
-        q = get_object_or_404(Question, slug=poll_id)
-        c = q.choice_set.get(meme=int(request.POST.getlist('voted_meme')[0]))
-        c.votes += 1
-        c.save()
-    return HttpResponseRedirect(reverse('memes:poll_view_results', kwargs={'poll_id': q.slug}))
+    def post(self, request, *args, **kwargs):
+        form = VoteForm(request.POST)
+        if form.is_valid():
+            form.cleaned_data['choice'].votes += 1
+            form.cleaned_data['choice'].save()
+
+        return HttpResponseRedirect(reverse('memes:main'))
 
 def poll_view_results(request: HttpRequest, poll_id):
     question = get_object_or_404(Question, slug=poll_id)
     return render(request, 'memes/poll_result.html', context={'question': question})
+
+class PollResultsView(ListView):
+    template_name = 'memes/poll_result.html'
+    context_object_name = 'choices'
+
+    def get_queryset(self):
+        queryset = get_object_or_404(Question, slug=self.kwargs['poll_id']).choice_set.all()
+        return queryset

@@ -4,26 +4,24 @@ from . import  views
 app_name = 'memes'
 urlpatterns = [
     # Базовые страницы
-    path('', views.main, name='main'),
-    path('memes/', views.memes, name='memes'),
-    path('about/', views.about, name='about'),
-    path('contacts/', views.contacts, name='contacts'),
+    path('', views.HomeView.as_view(), name='main'),
+    path('memes/', views.MemesListView.as_view(), name='memes'),
+    path('about/', views.AboutView.as_view(), name='about'),
+    path('contacts/', views.ContactsView.as_view(), name='contacts'),
 
     # Страница с мемом
-    path('memes/<slug:meme_slug>/', views.meme_for_id, name='meme_for_id'),
-    path('memes/<slug:meme_slug>/comment/', views.meme_comment, name='meme_comment'),
+    path('memes/<slug:meme_slug>/', views.MemeDetailView.as_view(), name='meme_for_id'),
 
     # Отправка мемов
-    path('send_meme/', views.send_meme, name='add_meme'),
+    path('send_meme/', views.SendMemeView.as_view(), name='add_meme'),
 
     # Страница со всеми опросами
-    path('polls/', views.polls, name='polls'),
+    path('polls/', views.PollView.as_view(), name='polls'),
 
     # Создание опроса
-    path('polls/create_poll/', views.create_poll_view, name='create_poll'),
+    path('polls/create_poll/', views.CreatePollView.as_view(), name='create_poll'),
 
     # Просмотр опросов и голосование
-    path('polls/<slug:poll_id>/', views.poll_view, name='poll_view'),
-    path('polls/<slug:poll_id>/processing/', views.poll_view_processing, name='poll_view_processing'),
-    path('polls/<slug:poll_id>/results/', views.poll_view_results, name='poll_view_results')
+    path('polls/<slug:poll_id>/', views.PollDetailView.as_view(), name='poll_view'),
+    path('polls/<slug:poll_id>/results/', views.PollResultsView.as_view(), name='poll_view_results')
 ]

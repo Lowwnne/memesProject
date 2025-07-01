@@ -4,7 +4,7 @@
 
 <h1>Результаты опроса</h1>
 <ul>
-{% for choice in question.choice_set.all %}
+{% for choice in choices %}
 <li>
   <h3>{{ choice.meme.title }}</h3>
   <img src="{{ choice.meme.image.url }}">

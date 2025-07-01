@@ -2,15 +2,21 @@
 {% block content %}
 {% load static %}
 
-<h2>Галерея мемов</h2>
+<h1>{{ title }}</h1>
+{% if memes %}
+
 <ul>
-    {% for meme in memes %}
-        <li>
-            <h3>{{ meme.title }}</h3>
-            <img src={{ meme.image.url }}>
-            <p>{{ meme.description }}</p>
-        </li>
-    {% endfor %}
+{% for meme in memes %}
+    <li>
+        <h3><a href="{{ meme.get_absolute_url }}">{{ meme.title }}</a></h3>
+        <img src="{{ meme.image.url }}">
+        <br>
+    </li>
+{% endfor %}
 </ul>
+
+{% else %}
+<p>Мемов пока нет :(</p>
+{% endif %}
 
 {% endblock content %}
