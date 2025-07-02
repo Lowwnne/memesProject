@@ -34,6 +34,9 @@ class Question(models.Model):
     end_date = models.DateTimeField(verbose_name='Дата окончания', null=True)
     winner = models.ForeignKey(Memes, on_delete=models.CASCADE, null=True)
 
+    def get_absolute_url(self):
+        return reverse('memes:poll_view', kwargs={'poll_id': self.slug})
+
     def __str__(self):
         return self.title
 
